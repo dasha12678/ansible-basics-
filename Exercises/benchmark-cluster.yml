@@ -19,27 +19,34 @@
         state: present
 
 - hosts: master
+  vars:
+    replicas: [1, 2, 4, 8]
   tasks:
     - name: remove whoami service
-      command: "docker service rm whoami"
+      command: "docker service rm whoami{{item}}"
       become: yes
       ignore_errors: True
+      loop: "{{ replicas }}"
 
     - name: create whoami service
-      command: "docker service create --name whoami --publish published=8080,target=80 --replicas 1 containous/whoami"
+      command: "docker service create --name whoami{{item}} --publish published=808{{item}},target=80 --replicas {{item}} containous/whoami"
       become: yes
-
+      loop: "{{ replicas }}"
 
 - hosts: localhost
   gather_facts: yes
+  vars:
+    replicas: [1, 2, 4, 8]
   tasks:
     - name: wrk 1
-      command: "wrk -t4 -c5 -d30s http://{{ hostvars | first }}:8080"
+      command: "wrk -t4 -c5 -d30s http://{{ hostvars | first }}:808{{item}}"
       register: wrk_output
+      loop: "{{ replicas }}"
 
     - name:
       ansible.builtin.debug:
-        msg: '{{ wrk_output.stdout_lines | select("search", "Req/Sec") }}'
+        msg: '{{ item.stdout_lines | select("search", "Req/Sec") }}'
+      loop: "{{ wrk_output.results }}"
 
 
 #REPEAT FOR SCALE 2,4,8
