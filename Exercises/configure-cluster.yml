@@ -122,7 +122,8 @@
         msg: "[Worker] {{ hostvars['join_cmd_holder']['cmd'] }}"
 
     - name: join #SOLUTION
-      ansible.builtin.git shell: "{{ hostvars['join_cmd_holder']['cmd'] }}"
+      become: true
+      ansible.builtin.shell: "{{ hostvars['join_cmd_holder']['cmd'] }}"
       
 
 - hosts: master
